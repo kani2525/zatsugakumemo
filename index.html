@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>雑学メモ</title>
+<meta name="description" content="うんちく・雑学を記録していつでも見返せるメモアプリ">
+<meta name="theme-color" content="#ff5e62">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="雑学メモ">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <h1>雑学メモ</h1>
+    <span id="entry-count" class="entry-count"></span>
+  </header>
+
+  <main id="view-list" class="view">
+    <div class="search-row">
+      <input id="search-input" type="search" placeholder="キーワードで検索" autocomplete="off">
+    </div>
+    <div id="chip-row" class="chip-row"></div>
+    <div id="list-empty" class="empty-message hidden">
+      <p>まだうんちくが登録されていません。</p>
+      <p>右下の「＋追加」から最初の1件を登録してみましょう。</p>
+    </div>
+    <ul id="entry-list" class="entry-list"></ul>
+  </main>
+
+  <main id="view-random" class="view hidden">
+    <div class="random-controls">
+      <select id="random-category"><option value="">すべてのカテゴリ</option></select>
+      <button id="random-shuffle" class="primary-btn">🎲 ネタを引く</button>
+    </div>
+    <div id="random-empty" class="empty-message hidden">
+      <p>このカテゴリにはまだうんちくがありません。</p>
+    </div>
+    <div id="random-card" class="random-card hidden">
+      <div class="random-category-label" id="random-card-category"></div>
+      <h2 id="random-card-title"></h2>
+      <p id="random-card-content"></p>
+      <p id="random-card-source" class="source-line"></p>
+    </div>
+  </main>
+
+  <main id="view-form" class="view hidden">
+    <h2 id="form-heading">うんちくを追加</h2>
+    <form id="entry-form">
+      <label>タイトル（一言まとめ）<span class="required">必須</span>
+        <input id="field-title" type="text" required placeholder="例：タコの心臓は3つある">
+      </label>
+      <label>くわしい内容
+        <textarea id="field-content" rows="6" placeholder="くわしい説明や、話すときのオチなどを書いておきましょう"></textarea>
+      </label>
+      <label>カテゴリ
+        <input id="field-category" type="text" list="category-options" placeholder="例：動物、歴史、food など">
+        <datalist id="category-options"></datalist>
+      </label>
+      <label>タグ（カンマ区切りで複数OK）
+        <input id="field-tags" type="text" placeholder="例：生き物, 意外, 海">
+      </label>
+      <label>出典・メモ
+        <input id="field-source" type="text" placeholder="例：〇〇という本より、URLなど">
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="primary-btn">保存する</button>
+        <button type="button" id="form-cancel" class="secondary-btn hidden">キャンセル</button>
+      </div>
+    </form>
+  </main>
+
+  <main id="view-backup" class="view hidden">
+    <h2>バックアップ</h2>
+    <p class="backup-note">
+      このアプリのデータは、このスマホ・このブラウザの中だけに保存されています。<br>
+      機種変更やブラウザのデータ消去でうんちくが消えてしまわないよう、
+      ときどき「書き出す」でバックアップしておくことをおすすめします。
+    </p>
+    <div class="backup-actions">
+      <button id="export-btn" class="primary-btn">⬇️ バックアップを書き出す</button>
+      <label class="secondary-btn file-label">
+        ⬆️ バックアップを読み込む
+        <input id="import-input" type="file" accept="application/json">
+      </label>
+    </div>
+    <p id="backup-status" class="backup-status"></p>
+    <hr>
+    <p class="backup-note">現在の登録件数：<strong id="backup-count">0</strong> 件</p>
+  </main>
+
+  <div id="detail-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-category-label" id="detail-category"></div>
+      <h2 id="detail-title"></h2>
+      <p id="detail-content"></p>
+      <p id="detail-source" class="source-line"></p>
+      <div id="detail-tags" class="tag-list"></div>
+      <div class="modal-actions">
+        <button id="detail-edit" class="secondary-btn">編集</button>
+        <button id="detail-delete" class="danger-btn">削除</button>
+        <button id="detail-close" class="primary-btn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabbar">
+    <button class="tab-btn active" data-view="list">
+      <span class="tab-icon">📋</span><span>一覧</span>
+    </button>
+    <button class="tab-btn" data-view="random">
+      <span class="tab-icon">🎲</span><span>ランダム</span>
+    </button>
+    <button class="tab-btn" data-view="form">
+      <span class="tab-icon">➕</span><span>追加</span>
+    </button>
+    <button class="tab-btn" data-view="backup">
+      <span class="tab-icon">💾</span><span>バックアップ</span>
+    </button>
+  </nav>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
