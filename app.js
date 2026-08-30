@@ -15,9 +15,6 @@
     reelBuilt: false,
     mapCenterId: null,
     mapHistory: [],
-    memoQueue: [],
-    memoBuiltCategory: null,
-    memoRevealed: false,
   };
 
   var els = {};
@@ -39,7 +36,6 @@
       source: e.source || "",
       createdAt: e.createdAt || Date.now(),
       links: Array.isArray(e.links) ? e.links.slice() : [],
-      memo: e.memo && typeof e.memo === "object" ? { status: e.memo.status === "mastered" ? "mastered" : "new" } : { status: "new" },
     };
   }
 
@@ -110,7 +106,6 @@
         source: s.source,
         createdAt: now - (samples.length - i) * 1000,
         links: [ids[(i + 1) % ids.length]],
-        memo: { status: "new" },
       };
     });
     saveEntries();
@@ -219,7 +214,6 @@
       return '<option value="' + escapeHtml(c.name) + '"></option>';
     }).join("");
     fillCategorySelect(qs("reel-category"), categories);
-    fillCategorySelect(qs("memo-category"), categories);
   }
 
   function renderAll() {
@@ -261,7 +255,7 @@
     delete els.detailModal.dataset.id;
   }
 
-  var VIEWS = ["list", "reel", "map", "memo", "form", "backup"];
+  var VIEWS = ["list", "reel", "map", "form", "backup"];
 
   function switchView(name) {
     VIEWS.forEach(function (v) {
@@ -273,9 +267,30 @@
     if (name === "form" && state.editingId === null) {
       resetForm();
     }
-    if (name === "reel") buildReel();
+    if (name === "reel") { layoutReelView(); buildReel(); }
     if (name === "map") renderMap();
-    if (name === "memo") ensureMemoQueue();
+  }
+
+  function layoutReelView() {
+    var view = qs("view-reel");
+    var topbarRect = els.topbar.getBoundingClientRect();
+    var tabbarRect = els.tabbar.getBoundingClientRect();
+    var appRect = els.app.getBoundingClientRect();
+    view.style.top = topbarRect.bottom + "px";
+    view.style.left = appRect.left + "px";
+    view.style.width = appRect.width + "px";
+    view.style.height = Math.max(0, tabbarRect.top - topbarRect.bottom) + "px";
+  }
+
+  function focusMapOn(id) {
+    var mapCurrentlyVisible = !qs("view-map").classList.contains("hidden");
+    if (mapCurrentlyVisible && state.mapCenterId && state.mapCenterId !== id) {
+      state.mapHistory.push(state.mapCenterId);
+    } else if (!mapCurrentlyVisible) {
+      state.mapHistory = [];
+    }
+    state.mapCenterId = id;
+    switchView("map");
   }
 
   // ---------- Add / Edit form ----------
@@ -354,7 +369,6 @@
         source: qs("field-source").value.trim(),
         createdAt: Date.now(),
         links: newLinks,
-        memo: { status: "new" },
       };
       state.entries.push(entry);
     }
@@ -406,6 +420,7 @@
     els.reelContainer.innerHTML = "";
     initial.forEach(appendReelCard);
     els.reelContainer.scrollTop = 0;
+    updateReelPosition();
   }
 
   function appendReelCard(entry) {
@@ -413,6 +428,7 @@
     card.className = "reel-card";
     card.dataset.id = entry.id;
     card.innerHTML =
+      '<div class="reel-card-inner">' +
       (entry.category ? '<div class="random-category-label">' + escapeHtml(entry.category) + "</div>" : "") +
       "<h2>" + escapeHtml(entry.title) + "</h2>" +
       '<p class="reel-content">' + escapeHtml(entry.content) + "</p>" +
@@ -421,12 +437,22 @@
       '<button class="secondary-btn reel-map-btn">🕸️ マップで見る</button>' +
       '<button class="secondary-btn reel-edit-btn">編集</button>' +
       '<button class="danger-btn reel-delete-btn">削除</button>' +
+      "</div>" +
       "</div>";
     els.reelContainer.appendChild(card);
   }
 
+  function updateReelPosition() {
+    var el = els.reelContainer;
+    var total = el.children.length;
+    if (total === 0) { qs("reel-position").textContent = ""; return; }
+    var index = Math.min(total, Math.round(el.scrollTop / el.clientHeight) + 1);
+    qs("reel-position").textContent = index + " / " + total;
+  }
+
   function maybeExtendReel() {
     var el = els.reelContainer;
+    updateReelPosition();
     if (!state.reelPool || state.reelPool.length === 0) return;
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - el.clientHeight * 0.5) {
       shuffle(state.reelPool).slice(0, Math.min(state.reelPool.length, 8)).forEach(appendReelCard);
@@ -492,6 +518,7 @@
     });
 
     var centerG = document.createElementNS(NS, "g");
+    centerG.setAttribute("data-id", center.id);
     var centerCircle = document.createElementNS(NS, "circle");
     centerCircle.setAttribute("class", "map-node-circle center");
     centerCircle.setAttribute("cx", cx); centerCircle.setAttribute("cy", cy); centerCircle.setAttribute("r", centerR);
@@ -501,92 +528,6 @@
     svg.appendChild(centerG);
   }
 
-  function goToMapNode(id) {
-    if (id === state.mapCenterId) return;
-    state.mapHistory.push(state.mapCenterId);
-    state.mapCenterId = id;
-    renderMap();
-  }
-
-  // ---------- Memo (flashcard) view ----------
-
-  function ensureMemoQueue() {
-    var category = qs("memo-category").value;
-    if (state.memoBuiltCategory === category && state.memoQueue.length >= 0 && state.memoInitialized) {
-      renderMemoProgress(category);
-      renderMemoCard();
-      return;
-    }
-    rebuildMemoQueue(category);
-  }
-
-  function rebuildMemoQueue(category) {
-    state.memoBuiltCategory = category;
-    state.memoInitialized = true;
-    var pool = state.entries.filter(function (e) {
-      return (!category || e.category === category) && e.memo.status !== "mastered";
-    });
-    state.memoQueue = shuffle(pool).map(function (e) { return e.id; });
-    state.memoRevealed = false;
-    renderMemoProgress(category);
-    renderMemoCard();
-  }
-
-  function renderMemoProgress(category) {
-    var pool = state.entries.filter(function (e) { return !category || e.category === category; });
-    var mastered = pool.filter(function (e) { return e.memo.status === "mastered"; }).length;
-    qs("memo-progress").textContent = pool.length > 0 ? mastered + " / " + pool.length + " 覚えた" : "";
-  }
-
-  function renderMemoCard() {
-    var done = state.memoQueue.length === 0;
-    qs("memo-done").classList.toggle("hidden", !done);
-    els.memoCard.classList.toggle("hidden", done);
-    if (done) return;
-    var entry = getEntryById(state.memoQueue[0]);
-    if (!entry) { state.memoQueue.shift(); renderMemoCard(); return; }
-    qs("memo-card-category").textContent = entry.category || "";
-    qs("memo-card-category").classList.toggle("hidden", !entry.category);
-    qs("memo-card-title").textContent = entry.title;
-    qs("memo-card-content").textContent = entry.content || "";
-    qs("memo-card-source").textContent = entry.source ? "出典：" + entry.source : "";
-    state.memoRevealed = false;
-    qs("memo-card-back").classList.add("hidden");
-    qs("memo-reveal").classList.remove("hidden");
-    qs("memo-judge").classList.add("hidden");
-  }
-
-  function memoReveal() {
-    state.memoRevealed = true;
-    qs("memo-card-back").classList.remove("hidden");
-    qs("memo-reveal").classList.add("hidden");
-    qs("memo-judge").classList.remove("hidden");
-  }
-
-  function memoJudge(isMastered) {
-    var id = state.memoQueue.shift();
-    var entry = getEntryById(id);
-    if (entry) {
-      if (isMastered) {
-        entry.memo.status = "mastered";
-        saveEntries();
-      } else {
-        state.memoQueue.push(id);
-      }
-    }
-    renderMemoProgress(qs("memo-category").value);
-    renderMemoCard();
-  }
-
-  function memoResetCategory() {
-    if (!window.confirm("このカテゴリの「覚えた」記録をリセットして、最初から覚え直します。よろしいですか？")) return;
-    var category = qs("memo-category").value;
-    state.entries.forEach(function (e) {
-      if (!category || e.category === category) e.memo.status = "new";
-    });
-    saveEntries();
-    rebuildMemoQueue(category);
-  }
 
   // ---------- Backup ----------
 
@@ -627,7 +568,6 @@
             source: String(item.source || ""),
             createdAt: item.createdAt || Date.now(),
             links: Array.isArray(item.links) ? item.links.slice() : [],
-            memo: { status: "new" },
             _oldLinks: Array.isArray(item.links) ? item.links.slice() : [],
           });
           added++;
@@ -689,6 +629,11 @@
     qs("detail-delete").addEventListener("click", function () {
       deleteEntry(els.detailModal.dataset.id);
     });
+    qs("detail-set-center").addEventListener("click", function () {
+      var id = els.detailModal.dataset.id;
+      closeDetail();
+      focusMapOn(id);
+    });
 
     qs("entry-form").addEventListener("submit", handleFormSubmit);
     qs("form-cancel").addEventListener("click", function () {
@@ -722,9 +667,7 @@
       if (ev.target.closest(".reel-edit-btn")) startEdit(id, "reel");
       else if (ev.target.closest(".reel-delete-btn")) deleteEntry(id);
       else if (ev.target.closest(".reel-map-btn")) {
-        state.mapCenterId = id;
-        state.mapHistory = [];
-        switchView("map");
+        focusMapOn(id);
       }
     });
 
@@ -732,7 +675,7 @@
     els.mapSvg.addEventListener("click", function (ev) {
       var g = ev.target.closest("g[data-id]");
       if (!g) return;
-      goToMapNode(g.dataset.id);
+      openDetail(g.dataset.id);
     });
     qs("map-crumbs").addEventListener("click", function (ev) {
       var chip = ev.target.closest(".chip");
@@ -746,15 +689,6 @@
     qs("map-edit-current").addEventListener("click", function () {
       if (state.mapCenterId) startEdit(state.mapCenterId, "map");
     });
-
-    // Memo
-    qs("memo-category").addEventListener("change", function () {
-      rebuildMemoQueue(qs("memo-category").value);
-    });
-    qs("memo-reveal").addEventListener("click", memoReveal);
-    qs("memo-again").addEventListener("click", function () { memoJudge(false); });
-    qs("memo-mastered").addEventListener("click", function () { memoJudge(true); });
-    qs("memo-reset").addEventListener("click", memoResetCategory);
   }
 
   function hideSplash() {
@@ -773,13 +707,19 @@
     els.reelEmpty = qs("reel-empty");
     els.reelContainer = qs("reel-container");
     els.mapSvg = qs("map-svg");
-    els.memoCard = qs("memo-card");
+    els.app = qs("app");
+    els.topbar = document.querySelector(".topbar");
+    els.tabbar = document.querySelector(".tabbar");
 
     state.entries = loadEntries();
     seedIfEmpty();
     state.formLinkSelection = new Set();
     bindEvents();
     renderAll();
+
+    window.addEventListener("resize", function () {
+      if (!qs("view-reel").classList.contains("hidden")) layoutReelView();
+    });
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

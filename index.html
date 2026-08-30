@@ -52,7 +52,10 @@
       <p>このカテゴリにはまだうんちくがありません。</p>
     </div>
     <div id="reel-container" class="reel-container"></div>
-    <p class="reel-hint">上にスワイプで次のうんちく</p>
+    <div class="reel-footer">
+      <span id="reel-position" class="reel-position"></span>
+      <span class="reel-hint">上にスワイプで次のカード</span>
+    </div>
   </main>
 
   <main id="view-map" class="view hidden">
@@ -62,35 +65,12 @@
       <p>まずは「追加」からうんちくを登録し、編集画面で「関連づけ」を設定してみましょう。</p>
     </div>
     <svg id="map-svg" class="map-svg" viewBox="0 0 320 320"></svg>
+    <p class="map-hint">丸をタップすると詳細が見られます。線でつながっているのが関連するうんちくです。</p>
     <div id="map-node-empty-note" class="map-note hidden">
       このうんちくには、まだ関連づけがありません。編集画面から追加できます。
     </div>
     <div id="map-actions" class="map-actions">
       <button id="map-edit-current" class="secondary-btn">この項目を編集して関連づけを追加</button>
-    </div>
-  </main>
-
-  <main id="view-memo" class="view hidden">
-    <div class="memo-header">
-      <select id="memo-category"><option value="">すべてのカテゴリ</option></select>
-      <div id="memo-progress" class="memo-progress"></div>
-    </div>
-    <div id="memo-done" class="empty-message hidden">
-      <p>🎉 このカテゴリのうんちくはすべて覚えました！</p>
-      <button id="memo-reset" class="secondary-btn">もう一度最初から覚え直す</button>
-    </div>
-    <div id="memo-card" class="memo-card hidden">
-      <div class="memo-category-label" id="memo-card-category"></div>
-      <h2 id="memo-card-title"></h2>
-      <div id="memo-card-back" class="memo-card-back hidden">
-        <p id="memo-card-content"></p>
-        <p id="memo-card-source" class="source-line"></p>
-      </div>
-      <button id="memo-reveal" class="primary-btn">こたえを見る</button>
-      <div id="memo-judge" class="memo-judge hidden">
-        <button id="memo-again" class="secondary-btn">🔁 もう一度</button>
-        <button id="memo-mastered" class="primary-btn">✅ 覚えた</button>
-      </div>
     </div>
   </main>
 
@@ -151,8 +131,11 @@
       <p id="detail-source" class="source-line"></p>
       <div id="detail-tags" class="tag-list"></div>
       <div id="detail-links" class="detail-links hidden">
-        <div class="detail-links-heading">関連するうんちく</div>
+        <div class="detail-links-heading">関連するうんちく（タップで移動）</div>
         <div id="detail-links-list" class="tag-list"></div>
+      </div>
+      <div class="detail-map-actions">
+        <button id="detail-set-center" class="secondary-btn">🕸️ ここを中心にしてマップを見る</button>
       </div>
       <div class="modal-actions">
         <button id="detail-edit" class="secondary-btn">編集</button>
@@ -171,9 +154,6 @@
     </button>
     <button class="tab-btn" data-view="map">
       <span class="tab-icon">🕸️</span><span>マップ</span>
-    </button>
-    <button class="tab-btn" data-view="memo">
-      <span class="tab-icon">🧠</span><span>暗記</span>
     </button>
     <button class="tab-btn" data-view="form">
       <span class="tab-icon">➕</span><span>追加</span>
