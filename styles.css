@@ -26,6 +26,7 @@ html, body {
   max-width: 640px;
   margin: 0 auto;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   padding-bottom: calc(72px + env(safe-area-inset-bottom));
@@ -328,16 +329,305 @@ textarea { resize: vertical; }
   flex: 1;
   border: none;
   background: none;
-  padding: 10px 0 8px;
+  padding: 9px 0 7px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   color: var(--text-muted);
   cursor: pointer;
 }
 
-.tab-btn .tab-icon { font-size: 1.25rem; }
+.tab-btn .tab-icon { font-size: 1.1rem; }
 
 .tab-btn.active { color: var(--accent); }
+
+/* ---------- Splash screen ---------- */
+
+#splash {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: linear-gradient(160deg, #ff9147, #ff5e62);
+  color: #fff;
+  transition: opacity 0.4s ease;
+}
+
+#splash.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-icon-frame {
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: splash-pop 0.5s ease;
+}
+
+.splash-icon {
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+}
+
+.splash-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  letter-spacing: 0.02em;
+}
+
+.splash-tagline {
+  font-size: 0.82rem;
+  opacity: 0.9;
+}
+
+@keyframes splash-pop {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ---------- Reel (swipe) view ---------- */
+
+#view-reel {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0 0;
+  overflow: hidden;
+}
+
+.reel-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 10px;
+}
+
+.reel-toolbar select { flex: 1; }
+
+.reel-toolbar-btn {
+  border: none;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 12px;
+  padding: 0 16px;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.reel-container {
+  flex: 1;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.reel-card {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  height: 100%;
+  min-height: 100%;
+  padding: 10px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  box-sizing: border-box;
+}
+
+.reel-card h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.4;
+}
+
+.reel-card .reel-content {
+  margin: 0;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  color: var(--text-muted);
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.reel-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.reel-hint {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 6px 0;
+  margin: 0;
+}
+
+/* ---------- Map (mind map) view ---------- */
+
+.map-crumbs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.map-crumbs .chip { white-space: nowrap; }
+
+.map-svg {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+
+.map-svg .map-line {
+  stroke: var(--border);
+  stroke-width: 2;
+}
+
+.map-svg .map-node-circle {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  cursor: pointer;
+}
+
+.map-svg .map-node-circle.center {
+  fill: var(--accent);
+}
+
+.map-svg .map-node-text {
+  font-size: 8px;
+  fill: var(--text);
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.map-svg .map-node-circle.center ~ .map-node-text,
+.map-svg text.map-center-text {
+  fill: #fff;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.map-note {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  padding: 12px 6px;
+}
+
+.map-actions {
+  margin-top: 14px;
+  text-align: center;
+}
+
+/* ---------- Memo (flashcard) view ---------- */
+
+.memo-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.memo-header select { flex: 1; }
+
+.memo-progress {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.memo-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px 20px;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.memo-card h2 { margin: 4px 0; font-size: 1.35rem; }
+
+.memo-card-back {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.memo-card-back p { margin: 0; line-height: 1.7; white-space: pre-wrap; }
+
+.memo-judge {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.memo-judge button { flex: 1; }
+
+/* ---------- Link picker (in the add/edit form) ---------- */
+
+.link-picker {
+  max-height: 170px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card-bg);
+  padding: 6px 4px;
+}
+
+.link-picker-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 10px;
+}
+
+.link-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.link-picker-row input { width: auto; padding: 0; }
+
+.detail-links {
+  margin-top: 4px;
+}
+
+.detail-links-heading {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.tag-pill.link-pill {
+  cursor: pointer;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+}

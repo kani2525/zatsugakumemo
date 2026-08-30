@@ -15,6 +15,15 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+<div id="splash">
+  <div class="splash-icon-frame">
+    <img src="icons/icon-192.png" alt="" class="splash-icon">
+  </div>
+  <div class="splash-title">雑学メモ</div>
+  <div class="splash-tagline">うんちくを集めて、つなげて、話そう</div>
+</div>
+
 <div id="app">
 
   <header class="topbar">
@@ -34,19 +43,54 @@
     <ul id="entry-list" class="entry-list"></ul>
   </main>
 
-  <main id="view-random" class="view hidden">
-    <div class="random-controls">
-      <select id="random-category"><option value="">すべてのカテゴリ</option></select>
-      <button id="random-shuffle" class="primary-btn">🎲 ネタを引く</button>
+  <main id="view-reel" class="view hidden">
+    <div class="reel-toolbar">
+      <select id="reel-category"><option value="">すべてのカテゴリ</option></select>
+      <button id="reel-shuffle" class="reel-toolbar-btn" title="シャッフルし直す">🔀</button>
     </div>
-    <div id="random-empty" class="empty-message hidden">
+    <div id="reel-empty" class="empty-message hidden">
       <p>このカテゴリにはまだうんちくがありません。</p>
     </div>
-    <div id="random-card" class="random-card hidden">
-      <div class="random-category-label" id="random-card-category"></div>
-      <h2 id="random-card-title"></h2>
-      <p id="random-card-content"></p>
-      <p id="random-card-source" class="source-line"></p>
+    <div id="reel-container" class="reel-container"></div>
+    <p class="reel-hint">上にスワイプで次のうんちく</p>
+  </main>
+
+  <main id="view-map" class="view hidden">
+    <div id="map-crumbs" class="map-crumbs"></div>
+    <div id="map-empty" class="empty-message hidden">
+      <p>マインドマップに使えるうんちくがまだありません。</p>
+      <p>まずは「追加」からうんちくを登録し、編集画面で「関連づけ」を設定してみましょう。</p>
+    </div>
+    <svg id="map-svg" class="map-svg" viewBox="0 0 320 320"></svg>
+    <div id="map-node-empty-note" class="map-note hidden">
+      このうんちくには、まだ関連づけがありません。編集画面から追加できます。
+    </div>
+    <div id="map-actions" class="map-actions">
+      <button id="map-edit-current" class="secondary-btn">この項目を編集して関連づけを追加</button>
+    </div>
+  </main>
+
+  <main id="view-memo" class="view hidden">
+    <div class="memo-header">
+      <select id="memo-category"><option value="">すべてのカテゴリ</option></select>
+      <div id="memo-progress" class="memo-progress"></div>
+    </div>
+    <div id="memo-done" class="empty-message hidden">
+      <p>🎉 このカテゴリのうんちくはすべて覚えました！</p>
+      <button id="memo-reset" class="secondary-btn">もう一度最初から覚え直す</button>
+    </div>
+    <div id="memo-card" class="memo-card hidden">
+      <div class="memo-category-label" id="memo-card-category"></div>
+      <h2 id="memo-card-title"></h2>
+      <div id="memo-card-back" class="memo-card-back hidden">
+        <p id="memo-card-content"></p>
+        <p id="memo-card-source" class="source-line"></p>
+      </div>
+      <button id="memo-reveal" class="primary-btn">こたえを見る</button>
+      <div id="memo-judge" class="memo-judge hidden">
+        <button id="memo-again" class="secondary-btn">🔁 もう一度</button>
+        <button id="memo-mastered" class="primary-btn">✅ 覚えた</button>
+      </div>
     </div>
   </main>
 
@@ -69,6 +113,10 @@
       <label>出典・メモ
         <input id="field-source" type="text" placeholder="例：〇〇という本より、URLなど">
       </label>
+      <label>関連づけ（マインドマップ用）
+        <input id="field-link-search" type="text" placeholder="関連する雑学の名前で絞り込み">
+        <div id="link-picker" class="link-picker"></div>
+      </label>
       <div class="form-actions">
         <button type="submit" class="primary-btn">保存する</button>
         <button type="button" id="form-cancel" class="secondary-btn hidden">キャンセル</button>
@@ -77,7 +125,7 @@
   </main>
 
   <main id="view-backup" class="view hidden">
-    <h2>バックアップ</h2>
+    <h2>設定・バックアップ</h2>
     <p class="backup-note">
       このアプリのデータは、このスマホ・このブラウザの中だけに保存されています。<br>
       機種変更やブラウザのデータ消去でうんちくが消えてしまわないよう、
@@ -102,6 +150,10 @@
       <p id="detail-content"></p>
       <p id="detail-source" class="source-line"></p>
       <div id="detail-tags" class="tag-list"></div>
+      <div id="detail-links" class="detail-links hidden">
+        <div class="detail-links-heading">関連するうんちく</div>
+        <div id="detail-links-list" class="tag-list"></div>
+      </div>
       <div class="modal-actions">
         <button id="detail-edit" class="secondary-btn">編集</button>
         <button id="detail-delete" class="danger-btn">削除</button>
@@ -114,14 +166,20 @@
     <button class="tab-btn active" data-view="list">
       <span class="tab-icon">📋</span><span>一覧</span>
     </button>
-    <button class="tab-btn" data-view="random">
-      <span class="tab-icon">🎲</span><span>ランダム</span>
+    <button class="tab-btn" data-view="reel">
+      <span class="tab-icon">🎲</span><span>リール</span>
+    </button>
+    <button class="tab-btn" data-view="map">
+      <span class="tab-icon">🕸️</span><span>マップ</span>
+    </button>
+    <button class="tab-btn" data-view="memo">
+      <span class="tab-icon">🧠</span><span>暗記</span>
     </button>
     <button class="tab-btn" data-view="form">
       <span class="tab-icon">➕</span><span>追加</span>
     </button>
     <button class="tab-btn" data-view="backup">
-      <span class="tab-icon">💾</span><span>バックアップ</span>
+      <span class="tab-icon">⚙️</span><span>設定</span>
     </button>
   </nav>
 

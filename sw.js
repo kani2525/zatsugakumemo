@@ -1,4 +1,4 @@
-var CACHE_NAME = "zatsugaku-memo-v1";
+var CACHE_NAME = "zatsugaku-memo-v2";
 var ASSETS = [
   "./",
   "./index.html",
